@@ -1,0 +1,147 @@
+body {
+    font-family: sans-serif;
+    background-color: #e0e0e0
+}
+
+h1,
+h2,
+h3,
+h4 {
+    color: #333333;
+}
+
+h1,
+h2 {
+    font-family: 'georgia', serif;
+    margin: 0;
+}
+
+h1 {
+/*    border-bottom: 2px solid #999999;*/
+    padding: 20px;
+}
+
+h2 {
+    font-size: 1.2em;
+    margin: 15px;
+}
+
+h4 {
+    padding: 10px;
+}
+
+p,
+dd,
+dt {
+    color: #333333;
+    margin: 15px;
+}
+
+a {
+    text-decoration: none;
+/*    color: #333333; */
+/*   font-size: .75em;*/
+/*   margin: 15px;*/
+
+}
+
+.pane {
+/*    position: absolute;*/
+/*    left: 50%;*/
+    border: 2px solid;
+    border-radius: 5px;
+    padding: 10px;
+    margin-left:10%;
+    margin-right:10%;
+/*    margin: auto;*/
+    border-color: #999999;
+    background-color: #ffffff
+}
+
+.header {
+/*    left: 50%;*/
+    text-align: center;
+}
+
+.subheader {
+    left: 50%;
+/*    text-align: center;*/
+    padding: 10px;
+/*    border-bottom: 2px solid #999999;*/
+}
+
+.name {
+    width: 50%;
+    display: inline-block;
+    float: left;
+}
+
+.description {}
+
+.price {
+    text-align: right;
+    width: 50%;
+    float: right;
+}
+
+.flash {
+    background: #ffffff;
+    color: #cc1828;
+/*    border: 1px solid black;*/
+    border-radius: 5px;
+    font-size: .75em;
+    left: 50%;
+    text-align: center;
+
+}
+.link {
+  color:#03a9f4;
+  padding-top: 10px;
+}
+
+.btn-group {
+/*    background-color: #555555; /* Green background */
+    border-top: 2px solid #999999;
+    border-bottom: 2px solid #999999;
+    padding: 4px; /* Some padding */
+/*    float: left;*/
+}
+
+.btn {
+/*    background-color: #555555; /* Green background */
+    font-size: 0.75em;
+    border: 1px solid #999999; /* Green border */
+    border-radius: 5px;
+    color: #333333; /* White text */
+/*    background-color: #f0f0f0;*/
+    padding: 4px; /* Some padding */
+    cursor: hand; /* Pointer/hand icon */
+/*    float: left; /* Float the buttons side by side */
+}
+.button-left {
+/*    left: 50%;*/
+    text-align: left;
+    border: 1px solid #999999; /* Green border */
+    border-radius: 5px;
+    color: #333333; /* White text */
+    background-color: #f0f0f0;
+    padding: 4px; /* Some padding */
+    cursor: hand; /* Pointer/hand icon */
+  }
+
+
+/*.btn-group button:not(:last-child) {
+/*    border-right: none; /* Prevent double borders */
+/*}
+
+/* Clear floats (clearfix hack) */
+/*.btn-group:after {
+    content: "";
+    clear: both;
+    display: table;
+}*/
+
+/* Add a background color on hover */
+.btn-group:hover {
+    background-color: #bbbbbb;
+}

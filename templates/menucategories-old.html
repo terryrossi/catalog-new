@@ -1,0 +1,39 @@
+
+<html>
+  <head>
+  	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+
+
+	<body>
+  	<div class = 'pane'>
+  		<div class = 'header'>
+  		    <h1><a>Categories</a></h1>
+  	  </div>
+
+      <div class='btn-group'>
+              <a <span class="btn" href = '{{url_for('newCategory')}}'>Create New Category</span></a>
+      </div>
+
+      <div class = 'flash'>
+         {% with messages = get_flashed_messages() %}
+            {% if messages %}
+              {% for message in messages %}
+                 <strong>{{ message }}</strong>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+      </div>
+
+		  {% for cat in categories %}
+<!--		<p>{{cat.name}}</p> -->
+        <strong><p><a href='{{url_for('categoryMenu',category_id = cat.id)}}' >{{cat.name}}</a></p></strong>
+	<!-- <div class = "editdeletepane">
+	<a href='{{url_for('editCategory',category_id = cat.id)}}' >Edit</a>
+	<a href='{{url_for('deleteCategory', category_id = cat.id)}}' >
+	Delete</a>
+</div> -->
+		  {% endfor %}
+    </div>
+	</body>
+</html>

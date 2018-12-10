@@ -1,0 +1,63 @@
+
+	{% extends "main.html" %}
+	{% block content %}
+	{% include "header.html" %}
+
+			<div class="row top-menu">
+				<div class="col-md-10"></div>
+				<div class="col-md-2 text-right"></div>
+			</div>
+			<div class="row divider blue">
+				<div class="col-md-12"></div>
+			</div>
+			<div class="row banner main">
+				<div class="col-md-1"></div>
+				<div class="col-md-11 padding-none">
+					<h1>{{category.name}}</h1>
+				</div>
+			</div>
+			<div class="col-md-1"></div>
+			<div class='btn-group'>
+<!--					<a <span class="btn" href = '{{url_for('category') }}'>List of Categories</span></a>-->
+					<a <span class="btn" href='{{url_for('editCategory',category_id = category.id)}}' >Rename Category</span></a>
+					<a <span class="btn" href = '{{url_for('newCategory')}}'>Create a New Category</span></a>
+					<a <span class="btn" href = '{{url_for('deleteCategory',category_id = category.id)}}'>Delete Category</span></a>
+					<a <span class="btn" href = '{{url_for('newProduct',category_id = category.id)}}'>Create a New Product</span></a>
+			</div>
+
+			<div class = 'flash'>
+					{% with messages = get_flashed_messages() %}
+						{% if messages %}
+							{% for message in messages %}
+								<strong> {{ message }} </strong>
+							{% endfor %}
+						{% endif %}
+					{% endwith %}
+			</div>
+
+	<!--		<div class="row padding-top padding-bottom">
+				<div class="col-md-1"></div>
+				<div class="col-md-10 padding-none">
+
+				</div>
+				<div class="col-md-1"></div>
+			</div>
+			<div>-->
+
+			<form action="{{url_for('deleteCategory', category_id = category.id)}}" method = 'POST'>
+				<div class="row">
+					<div class="col-md-1"></div>
+						<div class="col-md-10 menu-item">
+
+	<!--						<div class="col-md-1"></div>-->
+							<div class="col-md-11 padding-none">
+								<h1>Delete Category  {{category.name}}</h1>
+							</div>
+
+				      <input class="btn" type='submit' value='Confirm Delete'>
+				      <a class="btn" href = '{{url_for('category')}}'> Cancel </a>
+						</div>
+						<div class="col-md-1"></div>
+				</div>
+			</form>
+		{% endblock %}
