@@ -1,3 +1,5 @@
+import sys
+import os
 from flask import Flask, render_template, request, redirect, jsonify, url_for
 from flask import flash
 from sqlalchemy import create_engine, asc
@@ -29,6 +31,7 @@ DBSession = sessionmaker(bind=engine)
 
 @app.route('/login')
 def showLogin():
+    """Create anti-forgery state token."""
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
@@ -37,24 +40,25 @@ def showLogin():
 
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
+    """Facebook authentication."""
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
     access_token = request.data
-    print "access token received %s " % access_token
+    print ("access token received %s " % access_token)
 
     app_id = json.loads(open('fb_client_secrets.json', 'r').read())[
         'web']['app_id']
     app_secret = json.loads(
         open('fb_client_secrets.json', 'r').read())['web']['app_secret']
-    url = '''https://graph.facebook.com/oauth/access_token?grant_type=
-fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s'''
-    % (app_id, app_secret, access_token)
+    url = '''https://graph.facebook.com/oauth/access_token?grant_type= /
+           fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token= /
+           %s''' % (app_id, app_secret, access_token)
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
 
-    # Use token to get user info from API
+    # Use token to get user info from API.
     userinfo_url = "https://graph.facebook.com/v2.8/me"
 # Due to the formatting for the result from the server token exchange we
 # have to split the token first on commas and select the first index which give
@@ -63,12 +67,11 @@ fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s'''
 # so that it can be used directly in the graph api calls
     token = result.split(',')[0].split(':')[1].replace('"', '')
 
-    url = '''https://graph.facebook.com/v2.8/me?access_token=%s&fields=
-    name,id,email''' % token
+    url = '''https://graph.facebook.com/v2.8/me?access_token=
+           %s&fields=name,id,email''' % token
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
-    # print "url sent for API access:%s"% url
-    # print "API JSON result: %s" % result
+
     data = json.loads(result)
     login_session['provider'] = 'facebook'
     login_session['username'] = data["name"]
@@ -80,7 +83,7 @@ fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s'''
 
     # Get user picture
     url = '''https://graph.facebook.com/v2.8/me/picture?access_token=
-%s&redirect=0&height=200&width=200''' % token
+           %s&redirect=0&height=200&width=200''' % token
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
     data = json.loads(result)
@@ -109,11 +112,12 @@ fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s'''
 
 @app.route('/fbdisconnect')
 def fbdisconnect():
+    """Facebook disconnect."""
     facebook_id = login_session['facebook_id']
     # The access token must me included to successfully logout
     access_token = login_session['access_token']
-    url = '''https://graph.facebook.com/%s/permissions?access_token=%s'''
-    % (facebook_id, access_token)
+    url = '''https://graph.facebook.com/%s/permissions?access_token=
+           %s''' % (facebook_id, access_token)
     h = httplib2.Http()
     result = h.request(url, 'DELETE')[1]
     return "you have been logged out"
@@ -121,6 +125,8 @@ def fbdisconnect():
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
+    """Google authentication."""
+
     # Validate state token
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
@@ -164,7 +170,7 @@ def gconnect():
     if result['issued_to'] != CLIENT_ID:
         response = make_response(
             json.dumps("Token's client ID does not match app's."), 401)
-        print "Token's client ID does not match app's."
+        print ("Token's client ID does not match app's.")
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -208,13 +214,14 @@ def gconnect():
     output += ''' " style = "width: 300px; height: 300px;border-radius: 150px;
 -webkit-border-radius: 150px;-moz-border-radius: 150px;"> '''
     flash("you are now logged in as %s" % login_session['username'])
-    print "done!"
+    print ("done!")
     return output
 
 # User Helper Functions
 
 
 def createUser(login_session):
+    """Create New User."""
     session = DBSession()
     newUser = User(name=login_session['username'], email=login_session[
                    'email'], picture=login_session['picture'])
@@ -226,6 +233,7 @@ def createUser(login_session):
 
 
 def getUserInfo(user_id):
+    """Return User information."""
     session = DBSession()
     user = session.query(User).filter_by(id=user_id).one()
     session.close()
@@ -246,6 +254,7 @@ def getUserID(email):
 
 @app.route('/gdisconnect')
 def gdisconnect():
+    """Google Disconnect."""
     # Only disconnect a connected user.
     access_token = login_session.get('access_token')
     if access_token is None:
@@ -269,6 +278,7 @@ def gdisconnect():
 
 @app.route('/category/<int:category_id>/JSON')
 def categoryMenuJSON(category_id):
+    """Creation of Json file for category_id."""
     session = DBSession()
 
     category = session.query(Category).filter_by(id=category_id).one()
@@ -282,6 +292,7 @@ def categoryMenuJSON(category_id):
 
 @app.route('/category/<int:category_id>/<int:product_id>/JSON')
 def categoryProductJSON(category_id, product_id):
+    """Creation of Json file for category_id + Product_id."""
     session = DBSession()
 
     category = session.query(Category).filter_by(id=category_id).one()
@@ -309,6 +320,7 @@ def categoryProductJSON(category_id, product_id):
 @app.route('/')
 @app.route('/category')
 def category():
+    """Main page showing all Categories."""
     session = DBSession()
     categories = session.query(Category).order_by(asc(Category.name)).all()
     session.close()
@@ -323,6 +335,7 @@ def category():
 
 @app.route('/category/new', methods=['GET', 'POST'])
 def newCategory():
+    """Create a new Category."""
     if 'username' not in login_session:
         return redirect('/login')
 
@@ -347,7 +360,7 @@ def newCategory():
 
 @app.route('/category/<int:category_id>/edit', methods=['GET', 'POST'])
 def editCategory(category_id):
-    print ('*************** Entering editcategory *****************')
+    """Edit a Category."""
     session = DBSession()
     changedCategory = session.query(Category).filter_by(id=category_id).one()
     if 'username' not in login_session:
@@ -379,7 +392,7 @@ to edit this category. Please create your own category in order to edit.');}
 
 @app.route('/category/<int:category_id>/delete', methods=['GET', 'POST'])
 def deleteCategory(category_id):
-
+    """Delete a Category."""
     if 'username' not in login_session:
         return redirect('/login')
 
@@ -411,14 +424,15 @@ to delete this category. Please create your own category in order to delete.');
 @app.route('/category/<int:category_id>/menu/', methods=['GET', 'POST'])
 @app.route('/category/<int:category_id>/', methods=['GET', 'POST'])
 def categoryMenu(category_id):
+    """Show all Products for selected Category."""
     session = DBSession()
     category = session.query(Category).filter_by(id=category_id).one()
     creator = getUserInfo(category.user_id)
     products = session.query(Product).filter_by(category_id=category.id).all()
     session.close()
 
-    if 'username' not in login_session
-    or creator.id != login_session.get('user_id', False):
+    if ('username' not in login_session or
+        creator.id != login_session.get('user_id', False)):
         return render_template('publicmenu.html', category=category,
                                products=products, creator=creator)
     else:
@@ -430,7 +444,7 @@ def categoryMenu(category_id):
 
 @app.route('/product/<int:category_id>/new', methods=['GET', 'POST'])
 def newProduct(category_id):
-
+    """Create a new Product in selected category."""
     if 'username' not in login_session:
         return redirect('/login')
 
@@ -464,13 +478,14 @@ to add menu items to this category. Please create your own category in order to
 @app.route('/product/<int:category_id>/<int:product_id>/show',
            methods=['GET', 'POST'])
 def showProduct(category_id, product_id):
+    """Show product information."""
     session = DBSession()
     category = session.query(Category).filter_by(id=category_id).one()
     creator = getUserInfo(category.user_id)
     showProduct = session.query(Product).filter_by(id=product_id).one()
 
-    if 'username' not in login_session
-    or creator.id != login_session.get('user_id', False):
+    if ('username' not in login_session
+        or creator.id != login_session.get('user_id', False)):
         session.close()
         return render_template('publicshowproduct.html', category=category,
                                product=showProduct, creator=creator)
@@ -487,7 +502,7 @@ def showProduct(category_id, product_id):
 @app.route('/product/<int:category_id>/<int:product_id>/edit',
            methods=['GET', 'POST'])
 def editProduct(category_id, product_id):
-
+    """Edit product."""
     if 'username' not in login_session:
         return redirect('/login')
 
@@ -527,7 +542,7 @@ to edit products to this category. Please create your own category in order to
 @app.route('/product/<int:category_id>/<int:product_id>/delete',
            methods=['GET', 'POST'])
 def deleteProduct(category_id, product_id):
-
+    """Delete Product."""
     if 'username' not in login_session:
         return redirect('/login')
 
@@ -558,6 +573,7 @@ def deleteProduct(category_id, product_id):
 # Disconnect based on provider
 @app.route('/disconnect')
 def disconnect():
+    """Disconnect user"""
     if 'provider' in login_session:
         if login_session['provider'] == 'google':
             gdisconnect()
