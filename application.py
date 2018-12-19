@@ -1,7 +1,14 @@
 import sys
 import os
-from flask import Flask, render_template, request, redirect, jsonify, url_for
-from flask import flash
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    jsonify,
+    url_for,
+    flash
+)
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Category, Product, User
@@ -47,7 +54,7 @@ def fbconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
     access_token = request.data
-    print ("access token received %s " % access_token)
+#    print ("access token received %s " % access_token)
 
     app_id = json.loads(open('fb_client_secrets.json', 'r').read())[
         'web']['app_id']
@@ -104,8 +111,11 @@ def fbconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ''' " style = "width: 300px; height: 300px;border-radius: 150px;
--webkit-border-radius: 150px;-moz-border-radius: 150px;"> '''
+    output += ' " style = "width: 300px;' \
+              'height: 300px;' \
+              'border-radius: 150px;' \
+              '-webkit-border-radius: 150px;' \
+              '-moz-border-radius: 150px;"> '
 
     flash("Now logged in as %s" % login_session['username'])
     return output
@@ -212,10 +222,12 @@ def gconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ''' " style = "width: 300px; height: 300px;border-radius: 150px;
--webkit-border-radius: 150px;-moz-border-radius: 150px;"> '''
+    output += ' " style = "width: 300px;' \
+              'height: 300px;' \
+              'border-radius: 150px;' \
+              '-webkit-border-radius: 150px;' \
+              '-moz-border-radius: 150px;"> '
     flash("you are now logged in as %s" % login_session['username'])
-    print ("done!")
     return output
 
 # User Helper Functions
@@ -297,7 +309,6 @@ def categoryProductJSON(category_id, product_id):
     session = DBSession()
 
     category = session.query(Category).filter_by(id=category_id).one()
-    print ('CATEGORY ET PRODUIT', category_id, product_id)
     try:
         product = session.query(Product).filter_by(
             category_id=category_id, id=product_id).one()
@@ -306,14 +317,14 @@ def categoryProductJSON(category_id, product_id):
             return jsonify(Category=category.serialize,
                            Product=product.serialize)
         else:
-            errormessage == "No Product: "
+            errormessage = "No Product: "
             errormessage += product_id
             errormessage += " for Category: "
             errormessage += category_id
             session.close()
             return jsonify(errormessage)
-    except IOError:
-        self.send_error(404, 'File Not Found: %s' % self.path)
+    except OSError:
+        return jsonify(message='File Not Found'), 404
 
 
 def login_required(f):
@@ -324,7 +335,6 @@ def login_required(f):
             return redirect('/login')
         return f(*args, **kwargs)
     return x
-
 
 
 # Show all Categories
@@ -358,10 +368,8 @@ def newCategory():
             name=request.form['name'], user_id=login_session['user_id'])
         session.add(newCategory)
         session.commit()
-        print ("new category created!")
-        print ("new category name", newCategory.name)
-        print ("new category user_id", newCategory.user_id)
-        flash("New Category Created!")
+
+        flash("New Category {} Created!".format(newCategory.name))
         session.close()
         return redirect(url_for('category'))
     else:
@@ -376,27 +384,24 @@ def editCategory(category_id):
     """Edit a Category."""
     session = DBSession()
     changedCategory = session.query(Category).filter_by(id=category_id).one()
-#    if 'username' not in login_session:
-#        session.close()
-#        return redirect('/login')
+
     if changedCategory.user_id != login_session['user_id']:
+        flash('You are not authorized to Edit {} '
+              'You can only Edit the Categories you have created.'
+              .format(changedCategory.name))
         session.close()
-        return '''<script>function myFunction() {alert('You are not authorized
-to edit this category. Please create your own category in order to edit.');}
-</script><body onload='myFunction()'>'''
+        return redirect(url_for('category'))
 
     if request.method == 'POST':
         if request.form['name']:
             changedCategory.name = request.form['name']
 
-        print ('CHANGED CATEGORY = ', changedCategory.name)
         session.add(changedCategory)
         session.commit()
         flash("Category Updated!")
         session.close()
         return redirect(url_for('category'))
     else:
-        print ('going to editcategory.html')
         session.close()
         return render_template('editcategory.html', category=changedCategory)
 
@@ -414,20 +419,19 @@ def deleteCategory(category_id):
     categoryToDelete = session.query(Category).filter_by(id=category_id).one()
 
     if categoryToDelete.user_id != login_session['user_id']:
+        flash('You are not authorized to Delete {} .'
+              'You can only Delete the Categories you have created.'
+              .format(categoryToDelete.name))
         session.close()
-        return '''<script>function myFunction() {alert('You are not authorized
-to delete this category. Please create your own category in order to delete.');
-}</script><body onload='myFunction()'>'''
+        return redirect(url_for('category'))
 
     if request.method == 'POST':
         session.delete(categoryToDelete)
         session.commit()
-        flash("Category Deleted!")
-        print ('CATEGORY DELETED = ', categoryToDelete.name)
+        flash("Category {} Deleted!".format(categoryToDelete.name))
         session.close()
         return redirect(url_for('category'))
     else:
-        print ('going to deletecategory.html')
         session.close()
         return render_template('deletecategory.html',
                                category=categoryToDelete)
@@ -465,10 +469,11 @@ def newProduct(category_id):
     category = session.query(Category).filter_by(id=category_id).one()
 
     if login_session['user_id'] != category.user_id:
+        flash('You are not authorized to add products for category: {}. '
+              'You can only Add items to the Categories you have created.'
+              .format(category.name))
         session.close()
-        return '''<script>function myFunction() {alert('You are not authorized
-to add menu items to this category. Please create your own category in order to
- add items.');}</script><body onload='myFunction()'>'''
+        return redirect(url_for('categoryMenu', category_id=category_id))
 
     if request.method == 'POST':
         newProduct = Product(
@@ -479,7 +484,6 @@ to add menu items to this category. Please create your own category in order to
 
         session.add(newProduct)
         session.commit()
-        print ("new product created!")
         flash("New Product Created!")
         session.close()
         return redirect(url_for('categoryMenu', category_id=category_id))
@@ -523,10 +527,11 @@ def editProduct(category_id, product_id):
     changedProduct = session.query(Product).filter_by(id=product_id).one()
 
     if login_session['user_id'] != category.user_id:
+        flash('You are not authorized to Edit products for category: {}. '
+              'You can only Edit products for Categories you have created.'
+              .format(category.name))
         session.close()
-        return '''<script>function myFunction() {alert('You are not authorized
-to edit products to this category. Please create your own category in order to
- edit products.');}</script><body onload='myFunction()'>'''
+        return redirect(url_for('categoryMenu', category_id=category_id))
 
     if request.method == 'POST':
         if request.form['name']:
@@ -542,7 +547,6 @@ to edit products to this category. Please create your own category in order to
         session.close()
         return redirect(url_for('categoryMenu', category_id=category_id))
     else:
-        print ('going to editproduct.html')
         session.close()
         return render_template('editproduct.html', category=category,
                                product=changedProduct)
@@ -556,28 +560,25 @@ to edit products to this category. Please create your own category in order to
 @login_required
 def deleteProduct(category_id, product_id):
     """Delete Product."""
-#    if 'username' not in login_session:
-#        return redirect('/login')
 
     session = DBSession()
     category = session.query(Category).filter_by(id=category_id).one()
     productToDelete = session.query(Product).filter_by(id=product_id).one()
 
     if login_session['user_id'] != category.user_id:
+        flash('You are not authorized to Delete Products for category: {}. '
+              'You can only delete Products in Categories you have created.'
+              .format(category.name))
         session.close()
-        return '''<script>function myFunction() {alert('You are not authorized
- to delete products to this category. Please create your own category in order
-  to delete products.');}</script><body onload='myFunction()'>'''
+        return redirect(url_for('categoryMenu', category_id=category_id))
 
     if request.method == 'POST':
         session.delete(productToDelete)
         session.commit()
-        print ('finished commit, going to categoryMenu')
         flash("Product Deleted!")
         session.close()
         return redirect(url_for('categoryMenu', category_id=category_id))
     else:
-        print ('going to deleteproduct.html')
         session.close()
         return render_template('deleteproduct.html', category=category,
                                product=productToDelete)
