@@ -14,6 +14,7 @@ import httplib2
 import json
 from flask import make_response
 import requests
+from functools import wraps
 
 app = Flask(__name__)
 
@@ -314,6 +315,18 @@ def categoryProductJSON(category_id, product_id):
     except IOError:
         self.send_error(404, 'File Not Found: %s' % self.path)
 
+
+def login_required(f):
+    """Make sure user is logged in before proceeding"""
+    @wraps(f)
+    def x(*args, **kwargs):
+        if 'username' not in login_session:
+            return redirect('/login')
+        return f(*args, **kwargs)
+    return x
+
+
+
 # Show all Categories
 
 
@@ -334,13 +347,12 @@ def category():
 
 
 @app.route('/category/new', methods=['GET', 'POST'])
+@login_required
 def newCategory():
     """Create a new Category."""
-    if 'username' not in login_session:
-        return redirect('/login')
 
     if request.method == 'POST':
-        print ('ENTERING newCategory (POST)')
+
         session = DBSession()
         newCategory = Category(
             name=request.form['name'], user_id=login_session['user_id'])
@@ -359,13 +371,14 @@ def newCategory():
 
 
 @app.route('/category/<int:category_id>/edit', methods=['GET', 'POST'])
+@login_required
 def editCategory(category_id):
     """Edit a Category."""
     session = DBSession()
     changedCategory = session.query(Category).filter_by(id=category_id).one()
-    if 'username' not in login_session:
-        session.close()
-        return redirect('/login')
+#    if 'username' not in login_session:
+#        session.close()
+#        return redirect('/login')
     if changedCategory.user_id != login_session['user_id']:
         session.close()
         return '''<script>function myFunction() {alert('You are not authorized
@@ -391,10 +404,11 @@ to edit this category. Please create your own category in order to edit.');}
 
 
 @app.route('/category/<int:category_id>/delete', methods=['GET', 'POST'])
+@login_required
 def deleteCategory(category_id):
     """Delete a Category."""
-    if 'username' not in login_session:
-        return redirect('/login')
+#    if 'username' not in login_session:
+#        return redirect('/login')
 
     session = DBSession()
     categoryToDelete = session.query(Category).filter_by(id=category_id).one()
@@ -443,10 +457,9 @@ def categoryMenu(category_id):
 
 
 @app.route('/product/<int:category_id>/new', methods=['GET', 'POST'])
+@login_required
 def newProduct(category_id):
     """Create a new Product in selected category."""
-    if 'username' not in login_session:
-        return redirect('/login')
 
     session = DBSession()
     category = session.query(Category).filter_by(id=category_id).one()
@@ -501,10 +514,9 @@ def showProduct(category_id, product_id):
 
 @app.route('/product/<int:category_id>/<int:product_id>/edit',
            methods=['GET', 'POST'])
+@login_required
 def editProduct(category_id, product_id):
     """Edit product."""
-    if 'username' not in login_session:
-        return redirect('/login')
 
     session = DBSession()
     category = session.query(Category).filter_by(id=category_id).one()
@@ -541,10 +553,11 @@ to edit products to this category. Please create your own category in order to
 
 @app.route('/product/<int:category_id>/<int:product_id>/delete',
            methods=['GET', 'POST'])
+@login_required
 def deleteProduct(category_id, product_id):
     """Delete Product."""
-    if 'username' not in login_session:
-        return redirect('/login')
+#    if 'username' not in login_session:
+#        return redirect('/login')
 
     session = DBSession()
     category = session.query(Category).filter_by(id=category_id).one()
@@ -572,6 +585,7 @@ def deleteProduct(category_id, product_id):
 
 # Disconnect based on provider
 @app.route('/disconnect')
+@login_required
 def disconnect():
     """Disconnect user"""
     if 'provider' in login_session:
