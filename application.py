@@ -432,7 +432,7 @@ def categoryMenu(category_id):
     session.close()
 
     if ('username' not in login_session or
-        creator.id != login_session.get('user_id', False)):
+       creator.id != login_session.get('user_id', False)):
         return render_template('publicmenu.html', category=category,
                                products=products, creator=creator)
     else:
@@ -484,8 +484,8 @@ def showProduct(category_id, product_id):
     creator = getUserInfo(category.user_id)
     showProduct = session.query(Product).filter_by(id=product_id).one()
 
-    if ('username' not in login_session
-        or creator.id != login_session.get('user_id', False)):
+    if ('username' not in login_session or
+       creator.id != login_session.get('user_id', False)):
         session.close()
         return render_template('publicshowproduct.html', category=category,
                                product=showProduct, creator=creator)
